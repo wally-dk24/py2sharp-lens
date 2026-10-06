@@ -307,3 +307,62 @@ def test_has_content_ignores_fences_and_blanks():
     assert not translator._has_content("```csharp\n```\n")
     assert translator._has_content("// PY: 1: x = 1\n")
     assert translator._has_content("var x = 1;\n")
+
+
+# --- openai_compat extra params ------------------------------------------------
+
+
+def _recording_openai(monkeypatch, seen):
+    """Fake openai module whose create() records its kwargs."""
+
+    class FakeCompletions:
+        def create(self, **kwargs):
+            seen.update(kwargs)
+            msg = types.SimpleNamespace(content="var x = 1;")
+            return types.SimpleNamespace(choices=[types.SimpleNamespace(message=msg)])
+
+    class FakeChat:
+        completions = FakeCompletions()
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs):
+            self.chat = FakeChat()
+
+    fake_module = types.ModuleType("openai")
+    fake_module.OpenAI = FakeOpenAI
+    monkeypatch.setitem(sys.modules, "openai", fake_module)
+
+
+def test_openai_compat_extra_params_passed_when_set(monkeypatch):
+    seen = {}
+    _recording_openai(monkeypatch, seen)
+    monkeypatch.setenv("LLM_BASE_URL", "http://x/v1")
+    monkeypatch.setenv("LLM_MODEL", "m")
+    monkeypatch.setenv("LLM_MAX_TOKENS", "4000")
+    monkeypatch.setenv("LLM_REASONING_EFFORT", "low")
+    assert OpenAICompatProvider().complete("sys", "usr") == "var x = 1;"
+    assert seen["max_tokens"] == 4000
+    assert seen["reasoning_effort"] == "low"
+    assert seen["temperature"] == 0.2
+
+
+def test_openai_compat_extra_params_absent_by_default(monkeypatch):
+    seen = {}
+    _recording_openai(monkeypatch, seen)
+    monkeypatch.setenv("LLM_BASE_URL", "http://x/v1")
+    monkeypatch.setenv("LLM_MODEL", "m")
+    monkeypatch.delenv("LLM_MAX_TOKENS", raising=False)
+    monkeypatch.delenv("LLM_REASONING_EFFORT", raising=False)
+    OpenAICompatProvider().complete("sys", "usr")
+    assert "max_tokens" not in seen
+    assert "reasoning_effort" not in seen
+
+
+def test_openai_compat_bad_max_tokens_is_provider_error(monkeypatch):
+    seen = {}
+    _recording_openai(monkeypatch, seen)
+    monkeypatch.setenv("LLM_BASE_URL", "http://x/v1")
+    monkeypatch.setenv("LLM_MODEL", "m")
+    monkeypatch.setenv("LLM_MAX_TOKENS", "lots")
+    with pytest.raises(translator.ProviderError, match="must be an integer"):
+        OpenAICompatProvider().complete("sys", "usr")

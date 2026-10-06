@@ -24,6 +24,12 @@ services:
       LLM_BASE_URL: ${LLM_BASE_URL:-https://text.pollinations.ai/openai}
       LLM_MODEL: ${LLM_MODEL:-gpt-oss-20b}
       LLM_API_KEY: ${LLM_API_KEY:-}
+      # Room for the answer: reasoning models can burn the whole completion
+      # budget "thinking" and return empty content (finish_reason=length).
+      LLM_MAX_TOKENS: ${LLM_MAX_TOKENS:-4000}
+      # Pollinations-specific: curbs the reasoning budget. Unset (empty) it
+      # when pointing at other providers.
+      LLM_REASONING_EFFORT: ${LLM_REASONING_EFFORT:-low}
 
   ollama:
     image: ollama/ollama

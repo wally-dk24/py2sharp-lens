@@ -134,6 +134,8 @@ Health check: `GET /healthz` → `{"status": "ok"}`.
 | `LLM_PROVIDER` | `none` | `none` \| `openai_compat` \| `anthropic` \| `manual` |
 | `LLM_BASE_URL` | `http://localhost:11434/v1` | OpenAI-compatible base URL |
 | `LLM_MODEL` | _(empty)_ | Model name for `openai_compat` |
+| `LLM_MAX_TOKENS` | _(empty)_ | Cap on completion tokens (standard OpenAI param). Set `4000` for reasoning models that otherwise burn the budget thinking and return empty content |
+| `LLM_REASONING_EFFORT` | _(empty)_ | Provider-specific (e.g. `low` on Pollinations to curb the reasoning budget). Leave empty for providers that don't know it |
 | `LLM_API_KEY` | _(empty)_ | Optional; empty is fine for Ollama |
 | `ANTHROPIC_MODEL` | _(empty)_ | Model name for `anthropic` |
 | `ANTHROPIC_API_KEY` | _(empty)_ | Key for `anthropic` |

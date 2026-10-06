@@ -126,6 +126,26 @@ class OpenAICompatProvider(LLMProvider):
         self.model = os.environ.get("LLM_MODEL", "")
         # Ollama needs no key; the SDK requires *something*, so use a dummy.
         self._api_key = os.environ.get("LLM_API_KEY") or "not-needed"
+        # Optional caps: keep output room for the answer. Reasoning models
+        # (e.g. gpt-oss-20b) can burn the whole completion budget "thinking"
+        # and return finish_reason=length with EMPTY content — a bigger
+        # max_tokens and/or a low reasoning effort fixes that.
+        # Parsed in complete() (not here) so a bad value surfaces as a
+        # clean ProviderError (HTTP 502) instead of an import-time crash.
+        self._max_tokens_raw = os.environ.get("LLM_MAX_TOKENS", "").strip()
+        # Provider-specific (Pollinations honors "low"); plain OpenAI-style
+        # servers may ignore or reject it — only set it if you need it.
+        self._reasoning_effort = os.environ.get("LLM_REASONING_EFFORT", "").strip() or None
+
+    def _max_tokens(self) -> int | None:
+        if not self._max_tokens_raw:
+            return None
+        try:
+            return int(self._max_tokens_raw)
+        except ValueError as exc:
+            raise ProviderError(
+                f"LLM_MAX_TOKENS must be an integer, got {self._max_tokens_raw!r}."
+            ) from exc
 
     def complete(self, system: str, user: str) -> str:
         try:
@@ -142,14 +162,19 @@ class OpenAICompatProvider(LLMProvider):
             max_retries=1,  # one retry on transient failures, then give up
         )
         try:
-            resp = client.chat.completions.create(
-                model=self.model,
-                messages=[
+            create_kwargs: dict = {
+                "model": self.model,
+                "messages": [
                     {"role": "system", "content": system},
                     {"role": "user", "content": user},
                 ],
-                temperature=0.2,  # low: we want faithful translation, not prose
-            )
+                "temperature": 0.2,  # low: we want faithful translation, not prose
+            }
+            if (max_tokens := self._max_tokens()) is not None:
+                create_kwargs["max_tokens"] = max_tokens
+            if self._reasoning_effort:
+                create_kwargs["reasoning_effort"] = self._reasoning_effort
+            resp = client.chat.completions.create(**create_kwargs)
         except Exception as exc:
             # Never leak the key: scrub it if it somehow appears in the message.
             msg = str(exc)
