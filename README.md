@@ -57,6 +57,33 @@ Copy `.env.example` to `.env` and set what you need (`.env` is gitignored).
 The same `openai_compat` provider works with Groq, OpenRouter, and Gemini's
 OpenAI-compatible endpoint — only the base URL, key, and model change.
 
+### Free hosted option: Pollinations (no key, no signup)
+
+[Pollinations](https://github.com/pollinations/pollinations) exposes a free,
+keyless, OpenAI-compatible endpoint (anonymous tier, currently backed by
+`gpt-oss-20b`). Verified working with this app on 2026-10-06 — full pipeline
+including `// PY:` line mapping:
+
+```
+LLM_PROVIDER=openai_compat
+LLM_BASE_URL=https://text.pollinations.ai/openai
+LLM_MODEL=gpt-oss-20b
+# no LLM_API_KEY needed
+```
+
+```bash
+docker run -p 8000:8000 \
+  -e LLM_PROVIDER=openai_compat \
+  -e LLM_BASE_URL=https://text.pollinations.ai/openai \
+  -e LLM_MODEL=gpt-oss-20b \
+  wallydk24/py2sharp-lens:latest
+```
+
+Caveats: it's a free anonymous tier — no SLA, rate limits apply, and the
+backing model can change without notice (the app retries once on failure).
+Your prompts are sent to a third party; don't paste anything sensitive.
+Ollama stays the fully private option.
+
 ### Manual mode (no API at all)
 
 1. Set `LLM_PROVIDER=manual`.
