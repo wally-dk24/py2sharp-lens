@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Py2Sharp Lens — Python → C# learning lens</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header>
+  <h1>Py2Sharp Lens</h1>
+  <p class="subtitle">Understand Python by seeing idiomatic C# side by side</p>
+  <span id="provider-badge" class="badge">…</span>
+</header>
+
+<div id="banner" class="banner" hidden></div>
+
+<div class="toolbar">
+  <button id="translate-btn" title="Translate (Ctrl+Enter)">Translate</button>
+  <button id="copy-prompt-btn" title="Copy the exact prompt for manual mode">Copy prompt</button>
+  <button id="paste-result-btn" title="Paste a model reply back (manual mode)">Paste result</button>
+  <span class="hint">Ctrl+Enter translates · click a line to cross-highlight</span>
+  <span id="status" class="status"></span>
+</div>
+
+<div id="mapping-notice" class="mapping-notice" hidden>
+  <span id="mapping-notice-text"></span>
+  <button id="mapping-notice-dismiss" title="Dismiss">×</button>
+</div>
+
+<main class="panes">
+  <section class="pane">
+    <h2>Python</h2>
+    <div id="py-pane" class="editor"></div>
+  </section>
+  <section class="pane">
+    <h2>C#</h2>
+    <div id="cs-pane" class="editor"></div>
+  </section>
+</main>
+
+<section class="explanations">
+  <h2>Explanation <span id="notes-count"></span></h2>
+  <div id="error-box" class="error-box" hidden></div>
+  <ul id="notes-list"></ul>
+</section>
+
+<div id="paste-modal" class="modal" hidden>
+  <div class="modal-card">
+    <h3>Paste the model reply</h3>
+    <p>Paste the C# reply from your chat app (with <code>// PY:</code> markers). Line mapping and notes are rebuilt deterministically.</p>
+    <textarea id="paste-textarea" rows="14" placeholder="// PY: 1: x = -7 // 2&#10;..."></textarea>
+    <div class="modal-actions">
+      <button id="paste-import-btn">Import</button>
+      <button id="paste-cancel-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/loader.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

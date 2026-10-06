@@ -1,0 +1,187 @@
+/* Py2Sharp Lens — clean two-pane layout, OS-driven light/dark theme. */
+
+:root {
+  --bg: #ffffff;
+  --fg: #1a1a1a;
+  --muted: #666;
+  --border: #ddd;
+  --panel: #f7f7f7;
+  --accent: #0b7285;
+  --chip-info: #1971c2;
+  --chip-gotcha: #e67700;
+  --chip-danger: #c92a2a;
+  --highlight: rgba(11, 114, 133, 0.18);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1e1e1e;
+    --fg: #e6e6e6;
+    --muted: #a0a0a0;
+    --border: #3a3a3a;
+    --panel: #252525;
+    --accent: #66d9e8;
+    --highlight: rgba(102, 217, 232, 0.18);
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  padding: 0 16px 32px;
+}
+
+header { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+header h1 { margin: 12px 0 0; font-size: 1.4rem; }
+.subtitle { color: var(--muted); margin: 0; }
+
+.badge {
+  margin-left: auto;
+  font-size: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 10px;
+  color: var(--muted);
+}
+
+.banner {
+  margin-top: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--chip-gotcha);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--chip-gotcha) 10%, transparent);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+  flex-wrap: wrap;
+}
+
+button {
+  font: inherit;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--fg);
+  cursor: pointer;
+}
+button:hover { border-color: var(--accent); }
+button:disabled { opacity: 0.5; cursor: wait; }
+#translate-btn { background: var(--accent); border-color: var(--accent); color: #fff; }
+@media (prefers-color-scheme: dark) {
+  #translate-btn { color: #111; }
+}
+
+.hint { color: var(--muted); font-size: 0.85rem; }
+.status { margin-left: auto; color: var(--muted); font-size: 0.85rem; }
+
+.mapping-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.mapping-notice button {
+  margin-left: auto;
+  padding: 0 8px;
+  font-size: 1.1rem;
+  line-height: 1.4;
+}
+
+.panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 800px) {
+  .panes { grid-template-columns: 1fr; }
+}
+.pane h2, .explanations h2 {
+  font-size: 0.95rem;
+  color: var(--muted);
+  margin: 0 0 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.editor {
+  height: 420px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.explanations { margin-top: 16px; }
+#notes-list { list-style: none; margin: 8px 0 0; padding: 0; }
+#notes-list li {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  background: var(--panel);
+}
+.note-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.note-line { font-family: ui-monospace, monospace; color: var(--muted); font-size: 0.85rem; }
+.note-title { font-weight: 600; }
+.chip {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 999px;
+  padding: 1px 8px;
+  color: #fff;
+}
+.chip.info { background: var(--chip-info); }
+.chip.gotcha { background: var(--chip-gotcha); }
+.chip.danger { background: var(--chip-danger); }
+.note-msg { margin: 0; font-size: 0.92rem; }
+
+.error-box {
+  border: 1px solid var(--chip-danger);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 8px 0;
+  background: color-mix(in srgb, var(--chip-danger) 10%, transparent);
+  font-family: ui-monospace, monospace;
+  white-space: pre-wrap;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+.modal[hidden] { display: none; }
+.modal-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  width: min(640px, 92vw);
+}
+.modal-card textarea {
+  width: 100%;
+  font-family: ui-monospace, monospace;
+  background: var(--panel);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px;
+}
+.modal-actions { display: flex; gap: 8px; margin-top: 10px; justify-content: flex-end; }
