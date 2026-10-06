@@ -1,26 +1,33 @@
-# Py2Sharp Lens with a local Ollama sidecar.
+# Py2Sharp Lens.
 #
-#   docker compose up            # app on http://localhost:8000 (annotate-only banner)
+# Default provider is Pollinations (free, keyless, hosted — no signup):
+#   docker compose up            # app on http://localhost:8000, translation live
+#
+# To build from source instead of pulling the published image, replace
+# `image: wallydk24/py2sharp-lens:latest` with `build: .` below.
+#
+# Fully private alternative — local Ollama sidecar (opt-in profile):
+#   docker compose --profile local-llm up -d
 #   docker compose exec ollama ollama pull qwen2.5-coder:7b
-#
-# Then set LLM_PROVIDER=openai_compat (in .env or the environment below) and
-# point the app at the sidecar: inside compose the app reaches Ollama at
-# http://ollama:11434/v1 (NOT localhost — localhost is the app container itself).
+# and set in .env (or export): LLM_PROVIDER=openai_compat
+#   LLM_BASE_URL=http://ollama:11434/v1  (inside compose; NOT localhost)
+#   LLM_MODEL=qwen2.5-coder:7b
 services:
   lens:
-    build: .
+    image: wallydk24/py2sharp-lens:latest
     ports:
       - "8000:8000"
     env_file:
       - .env
     environment:
-      LLM_PROVIDER: ${LLM_PROVIDER:-none}
-      LLM_MODEL: ${LLM_MODEL:-}
-    depends_on:
-      - ollama
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai_compat}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://text.pollinations.ai/openai}
+      LLM_MODEL: ${LLM_MODEL:-gpt-oss-20b}
+      LLM_API_KEY: ${LLM_API_KEY:-}
 
   ollama:
     image: ollama/ollama
+    profiles: ["local-llm"]
     volumes:
       - ollama-data:/root/.ollama
 

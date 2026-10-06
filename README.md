@@ -101,10 +101,21 @@ docker build -t py2sharp-lens .
 docker run -p 8000:8000 py2sharp-lens
 ```
 
-App + Ollama sidecar:
+Compose (recommended — pulls the published image, Pollinations preconfigured):
 
 ```bash
+curl -O https://raw.githubusercontent.com/wally-dk24/py2sharp-lens/main/docker-compose.yml
 docker compose up
+```
+
+The app comes up on http://localhost:8000 with translation live — no keys,
+no model download. To switch providers, set `LLM_PROVIDER` / `LLM_BASE_URL` /
+`LLM_MODEL` in a `.env` file next to the compose file (or export them).
+
+Local Ollama sidecar (fully private, opt-in):
+
+```bash
+docker compose --profile local-llm up -d
 docker compose exec ollama ollama pull qwen2.5-coder:7b
 ```
 
