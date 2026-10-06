@@ -451,6 +451,20 @@ def clear_cache() -> None:
     _CACHE.clear()
 
 
+def _has_content(raw: str) -> bool:
+    """True if a model reply contains any real content.
+
+    Blank lines and markdown fence lines don't count — a reply that is
+    only whitespace (or only fences) is treated as empty. `//` comment
+    lines DO count: a markers-only reply is odd but still usable.
+    """
+    for ln in raw.splitlines():
+        stripped = ln.strip()
+        if stripped and not stripped.startswith("```"):
+            return True
+    return False
+
+
 def translate(python_code: str, provider: LLMProvider | None = None) -> TranslateResponse:
     """Full pipeline: syntax check -> annotate -> (maybe) LLM -> merge.
 
@@ -496,6 +510,17 @@ def translate(python_code: str, provider: LLMProvider | None = None) -> Translat
     system = build_system_prompt()
     user = build_user_prompt(python_code, findings)
     raw = provider.complete(system, user)
+    if not _has_content(raw):
+        # Free-tier models occasionally return an empty reply. The SDK's
+        # max_retries only covers transport errors, not empty content,
+        # so retry once here before giving up.
+        raw = provider.complete(system, user)
+    if not _has_content(raw):
+        raise ProviderError(
+            "The model returned an empty reply twice in a row. "
+            "This happens occasionally on free tiers — please hit "
+            "Translate again."
+        )
     response = merge(python_code, raw, findings, catalog, provider.name)
 
     _CACHE[key] = response

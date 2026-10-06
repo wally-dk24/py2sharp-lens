@@ -266,3 +266,44 @@ def test_get_provider_defaults_to_none(monkeypatch):
 def test_get_provider_unknown_falls_back_to_none(monkeypatch):
     monkeypatch.setenv("LLM_PROVIDER", "definitely-not-a-provider")
     assert translator.get_provider().name == "none"
+
+
+# --- empty-reply retry -------------------------------------------------------
+
+
+class ScriptedProvider(LLMProvider):
+    """Returns a script of replies in order, counting calls."""
+
+    name = "fake"
+    model = "fake-model"
+
+    def __init__(self, replies: list) -> None:
+        self.replies = list(replies)
+        self.calls = 0
+
+    def complete(self, system: str, user: str) -> str:
+        self.calls += 1
+        return self.replies.pop(0)
+
+
+def test_empty_reply_retried_once_then_succeeds():
+    provider = ScriptedProvider(["   \n  ", CANNED])
+    out = translator.translate("x = 1\n", provider=provider)
+    assert provider.calls == 2  # one retry, then success
+    assert out.csharp != ""
+    assert out.mapping_notice is None
+
+
+def test_empty_reply_twice_raises_provider_error():
+    provider = ScriptedProvider(["", "```csharp\n```\n"])
+    with pytest.raises(translator.ProviderError, match="empty reply"):
+        translator.translate("x = 1\n", provider=provider)
+    assert provider.calls == 2  # exactly one retry, no more
+
+
+def test_has_content_ignores_fences_and_blanks():
+    assert not translator._has_content("")
+    assert not translator._has_content("  \n\t\n")
+    assert not translator._has_content("```csharp\n```\n")
+    assert translator._has_content("// PY: 1: x = 1\n")
+    assert translator._has_content("var x = 1;\n")
